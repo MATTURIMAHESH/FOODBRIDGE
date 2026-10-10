@@ -1,0 +1,1536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoodBridge — Food Donation Marketplace</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#166534',
+                        primaryDark: '#14532D',
+                        emeraldAccent: '#22C55E',
+                        lightBg: '#F8FAFC',
+                        cardBg: '#FFFFFF',
+                        darkText: '#172033',
+                        secondaryText: '#64748B',
+                        accentOrange: '#F59E0B',
+                        successColor: '#16A34A',
+                        errorColor: '#DC2626',
+                        borderColor: '#E2E8F0'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- React & ReactDOM CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel for JSX compilation in browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8FAFC; color: #172033; }
+        .transition-all { transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="bg-lightBg min-h-screen text-darkText flex flex-col">
+    <div id="root" class="flex flex-col min-h-screen"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        // --- SVG Icons Component Library ---
+        const Icon = ({ name, className = "w-5 h-5" }) => {
+            switch (name) {
+                case 'leaf':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 20A13 13 0 014 7.5A13 13 0 0116.5 4a13 13 0 017.5 7.5c0 6.075-4.925 11-11 11z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 20v-9.5a4.5 4.5 0 014.5-4.5H20"/></svg>;
+                case 'heart':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>;
+                case 'search':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>;
+                case 'filter':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>;
+                case 'map-pin':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>;
+                case 'calendar':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>;
+                case 'clock':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>;
+                case 'plus':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"/></svg>;
+                case 'check':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/></svg>;
+                case 'x':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg>;
+                case 'shield':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>;
+                case 'users':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>;
+                case 'utensils':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>;
+                case 'award':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15l-3.535 2.122 1.098-4.045-3.155-2.678 4.14-.308L12 6l1.452 3.991 4.14.308-3.155 2.678 1.098 4.045L12 15z"/></svg>;
+                case 'logout':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>;
+                case 'user':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>;
+                case 'barchart':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>;
+                case 'trash':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>;
+                case 'eye':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>;
+                case 'arrow-right':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>;
+                default:
+                    return null;
+            }
+        };
+
+        // --- Mock Initial Data ---
+        const INITIAL_DONATIONS = [
+            {
+                id: 'd1',
+                foodName: 'Fresh Sourdough Bread & Assorted Pastries',
+                category: 'Bakery Items',
+                description: 'Baked fresh this morning. Surplus from local artisan bakery, individually wrapped and perfectly safe for consumption.',
+                quantity: 15,
+                unit: 'kg',
+                estimatedServings: 45,
+                preparationDate: '2026-10-10T06:00:00Z',
+                pickupDeadline: '2026-10-11T18:00:00Z',
+                pickupAddress: '124 Baker Street, Downtown',
+                city: 'Hyderabad',
+                pickupInstructions: 'Pick up at the rear loading dock between 2 PM and 5 PM.',
+                imageUrl: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=600&q=80',
+                dietaryType: 'Vegetarian',
+                allergens: 'Gluten, Dairy',
+                storageRequirements: 'Store in cool dry place',
+                donorId: 'donor_1',
+                donorName: 'GreenLeaf Bakery',
+                status: 'AVAILABLE'
+            },
+            {
+                id: 'd2',
+                foodName: 'Hot Gourmet Vegetable Biryani & Dal',
+                category: 'Cooked Meals',
+                description: 'Prepared for a corporate luncheon. Untouched hygienic portions packed in food-grade insulated containers.',
+                quantity: 25,
+                unit: 'kg',
+                estimatedServings: 80,
+                preparationDate: '2026-10-10T11:00:00Z',
+                pickupDeadline: '2026-10-10T22:00:00Z',
+                pickupAddress: 'TechPark Avenue, Block C',
+                city: 'Hyderabad',
+                pickupInstructions: 'Call upon arrival at main gate. Immediate pickup required.',
+                imageUrl: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80',
+                dietaryType: 'Vegetarian',
+                allergens: 'Nuts, Dairy',
+                storageRequirements: 'Keep warm above 60°C',
+                donorId: 'donor_1',
+                donorName: 'GreenLeaf Bakery',
+                status: 'AVAILABLE'
+            },
+            {
+                id: 'd3',
+                foodName: 'Fresh Organic Gala Apples & Bananas',
+                category: 'Fruits',
+                description: 'Slightly bruised outer skins but excellent fresh quality. Sorted from our supermarket fresh produce section.',
+                quantity: 40,
+                unit: 'kg',
+                estimatedServings: 120,
+                preparationDate: '2026-10-09T08:00:00Z',
+                pickupDeadline: '2026-10-12T12:00:00Z',
+                pickupAddress: 'SuperMart Hypermarket, Ring Road',
+                city: 'Hyderabad',
+                pickupInstructions: 'Use loading bay entrance #3.',
+                imageUrl: 'https://images.unsplash.com/photo-1619566636858-adf3ef9640b7?auto=format&fit=crop&w=600&q=80',
+                dietaryType: 'Vegan',
+                allergens: 'None',
+                storageRequirements: 'Refrigerated or room temperature',
+                donorId: 'donor_2',
+                donorName: 'FreshFoods Supermarket',
+                status: 'AVAILABLE'
+            },
+            {
+                id: 'd4',
+                foodName: 'Assorted Dairy Products (Milk & Yogurt)',
+                category: 'Dairy Products',
+                description: 'Short expiry date (2 days remaining) dairy products from refrigerated cold storage.',
+                quantity: 20,
+                unit: 'liters',
+                estimatedServings: 50,
+                preparationDate: '2026-10-08T08:00:00Z',
+                pickupDeadline: '2026-10-10T23:00:00Z',
+                pickupAddress: 'Grand Plaza Hotel, Banjarahills',
+                city: 'Hyderabad',
+                pickupInstructions: 'Request service elevator security escort.',
+                imageUrl: 'https://images.unsplash.com/photo-1628088062854-d1870b4553da?auto=format&fit=crop&w=600&q=80',
+                dietaryType: 'Vegetarian',
+                allergens: 'Dairy',
+                storageRequirements: 'Refrigerate below 4°C',
+                donorId: 'donor_3',
+                donorName: 'Grand Plaza Hotel',
+                status: 'AVAILABLE'
+            }
+        ];
+
+        const INITIAL_REQUESTS = [
+            {
+                id: 'req_1',
+                donationId: 'd2',
+                donorId: 'donor_1',
+                ngoId: 'ngo_1',
+                ngoName: 'Hope Foundation India',
+                requestedQuantity: 25,
+                status: 'APPROVED',
+                requestMessage: 'We have a shelter home with 80 children ready for immediate hot meal distribution tonight.',
+                requestedAt: '2026-10-10T12:30:00Z',
+                approvedAt: '2026-10-10T13:00:00Z'
+            }
+        ];
+
+        // --- Main App Component ---
+        const App = () => {
+            const [currentView, setCurrentView] = useState('home'); // home, browse, donor_dashboard, ngo_dashboard, how_it_works, about
+            const [currentUser, setCurrentUser] = useState({
+                id: 'donor_1',
+                name: 'Rajesh Sharma',
+                email: 'rajesh@greenleafbakery.com',
+                role: 'DONOR', // DONOR, NGO, GUEST
+                organizationName: 'GreenLeaf Bakery',
+                city: 'Hyderabad'
+            });
+            const [donations, setDonations] = useState(INITIAL_DONATIONS);
+            const [requests, setRequests] = useState(INITIAL_REQUESTS);
+            const [toast, setToast] = useState(null);
+            const [activeModal, setActiveModal] = useState(null); // 'login', 'register', 'add_donation', 'request_pickup', 'manage_requests'
+            const [selectedDonation, setSelectedDonation] = useState(null);
+
+            // Toast helper
+            const showToast = (message, type = 'success') => {
+                setToast({ message, type });
+                setTimeout(() => setToast(null), 4000);
+            };
+
+            // Calculated Stats
+            const stats = useMemo(() => {
+                const totalDonations = donations.length;
+                const completedPickups = requests.filter(r => r.status === 'COMPLETED').length + 342; // baseline mock + real
+                const totalDonors = 48;
+                const participatingNgos = 32;
+                return { totalDonations, completedPickups, totalDonors, participatingNgos };
+            }, [donations, requests]);
+
+            // Add Donation Handler
+            const handleAddDonation = (newDonationData) => {
+                const donation = {
+                    id: 'd_' + Date.now(),
+                    ...newDonationData,
+                    donorId: currentUser.id,
+                    donorName: currentUser.organizationName || currentUser.name,
+                    status: 'AVAILABLE'
+                };
+                setDonations([donation, ...donations]);
+                setActiveModal(null);
+                showToast('Food donation posted successfully!');
+            };
+
+            // Request Pickup Handler
+            const handleRequestPickup = (donationId, requestedQuantity, requestMessage) => {
+                const donation = donations.find(d => d.id === donationId);
+                if (!donation) return;
+
+                const newReq = {
+                    id: 'req_' + Date.now(),
+                    donationId,
+                    donorId: donation.donorId,
+                    ngoId: currentUser.id,
+                    ngoName: currentUser.organizationName || currentUser.name,
+                    requestedQuantity,
+                    status: 'REQUESTED',
+                    requestMessage,
+                    requestedAt: new Date().toISOString()
+                };
+
+                setRequests([newReq, ...requests]);
+                // Update donation status to REQUESTED
+                setDonations(donations.map(d => d.id === donationId ? { ...d, status: 'REQUESTED' } : d));
+                setActiveModal(null);
+                showToast('Pickup request submitted successfully to donor!');
+            };
+
+            // Request Action Handler (Approve / Reject / Complete)
+            const handleUpdateReqStatus = (reqId, newStatus) => {
+                const req = requests.find(r => r.id === reqId);
+                if (!req) return;
+
+                setRequests(requests.map(r => r.id === reqId ? { 
+                    ...r, 
+                    status: newStatus,
+                    approvedAt: newStatus === 'APPROVED' ? new Date().toISOString() : r.approvedAt,
+                    completedAt: newStatus === 'COMPLETED' ? new Date().toISOString() : r.completedAt
+                } : r));
+
+                // If approved, update donation status
+                if (newStatus === 'APPROVED') {
+                    setDonations(donations.map(d => d.id === req.donationId ? { ...d, status: 'APPROVED' } : d));
+                    showToast('Request approved successfully!');
+                } else if (newStatus === 'REJECTED') {
+                    setDonations(donations.map(d => d.id === req.donationId ? { ...d, status: 'AVAILABLE' } : d));
+                    showToast('Request rejected.');
+                } else if (newStatus === 'COMPLETED') {
+                    setDonations(donations.map(d => d.id === req.donationId ? { ...d, status: 'COMPLETED' } : d));
+                    showToast('Pickup marked as completed! Thank you for reducing food waste.');
+                }
+            };
+
+            // Delete Donation
+            const handleDeleteDonation = (donationId) => {
+                setDonations(donations.filter(d => d.id !== donationId));
+                showToast('Donation removed successfully.');
+            };
+
+            return (
+                <div className="flex flex-col min-h-screen">
+                    {}
+                    <Navbar 
+                        currentView={currentView} 
+                        setCurrentView={setCurrentView} 
+                        currentUser={currentUser} 
+                        setCurrentUser={setCurrentUser}
+                        setActiveModal={setActiveModal}
+                    />
+
+                    {/* Toast Notification Banner */}
+                    {toast && (
+                        <div className="fixed top-20 right-5 z-50 animate-bounce">
+                            <div className={`px-6 py-3 rounded-xl shadow-xl text-white font-medium flex items-center space-x-2 ${toast.type === 'error' ? 'bg-errorColor' : 'bg-successColor'}`}>
+                                <Icon name={toast.type === 'error' ? 'x' : 'check'} className="w-5 h-5" />
+                                <span>{toast.message}</span>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Main Content Router */}
+                    <main className="flex-grow">
+                        {currentView === 'home' && (
+                            <LandingPage 
+                                setCurrentView={setCurrentView} 
+                                stats={stats} 
+                                donations={donations} 
+                                setActiveModal={setActiveModal}
+                                setSelectedDonation={setSelectedDonation}
+                            />
+                        )}
+                        {currentView === 'browse' && (
+                            <BrowseFoodPage 
+                                donations={donations} 
+                                currentUser={currentUser} 
+                                setActiveModal={setActiveModal}
+                                setSelectedDonation={setSelectedDonation}
+                            />
+                        )}
+                        {currentView === 'donor_dashboard' && (
+                            <DonorDashboard 
+                                currentUser={currentUser} 
+                                donations={donations} 
+                                requests={requests}
+                                setActiveModal={setActiveModal}
+                                setSelectedDonation={setSelectedDonation}
+                                handleDeleteDonation={handleDeleteDonation}
+                                handleUpdateReqStatus={handleUpdateReqStatus}
+                            />
+                        )}
+                        {currentView === 'ngo_dashboard' && (
+                            <NgoDashboard 
+                                currentUser={currentUser} 
+                                requests={requests}
+                                donations={donations}
+                                handleUpdateReqStatus={handleUpdateReqStatus}
+                                setCurrentView={setCurrentView}
+                            />
+                        )}
+                        {currentView === 'how_it_works' && (
+                            <HowItWorksPage setCurrentView={setCurrentView} />
+                        )}
+                        {currentView === 'about' && (
+                            <AboutPage />
+                        )}
+                    </main>
+
+                    {}
+                    <Footer setCurrentView={setCurrentView} />
+
+                    {/* Modals */}
+                    {activeModal === 'login' && (
+                        <LoginModal 
+                            setActiveModal={setActiveModal} 
+                            setCurrentUser={setCurrentUser} 
+                            setCurrentView={setCurrentView}
+                            showToast={showToast}
+                        />
+                    )}
+                    {activeModal === 'register' && (
+                        <RegisterModal 
+                            setActiveModal={setActiveModal} 
+                            setCurrentUser={setCurrentUser} 
+                            setCurrentView={setCurrentView}
+                            showToast={showToast}
+                        />
+                    )}
+                    {activeModal === 'add_donation' && (
+                        <AddDonationModal 
+                            setActiveModal={setActiveModal} 
+                            handleAddDonation={handleAddDonation} 
+                        />
+                    )}
+                    {activeModal === 'request_pickup' && selectedDonation && (
+                        <RequestPickupModal 
+                            donation={selectedDonation} 
+                            setActiveModal={setActiveModal} 
+                            handleRequestPickup={handleRequestPickup} 
+                        />
+                    )}
+                    {activeModal === 'manage_requests' && selectedDonation && (
+                        <ManageRequestsModal 
+                            donation={selectedDonation}
+                            requests={requests}
+                            setActiveModal={setActiveModal}
+                            handleUpdateReqStatus={handleUpdateReqStatus}
+                        />
+                    )}
+                </div>
+            );
+        };
+
+        // --- Navbar Component ---
+        const Navbar = ({ currentView, setCurrentView, currentUser, setCurrentUser, setActiveModal }) => {
+            const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+            return (
+                <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-borderColor shadow-sm">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="flex justify-between items-center h-20">
+                            {/* Logo */}
+                            <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setCurrentView('home')}>
+                                <div className="w-12 h-12 rounded-xl bg-primary text-white flex items-center justify-center shadow-md">
+                                    <Icon name="leaf" className="w-7 h-7 text-emeraldAccent" />
+                                </div>
+                                <div>
+                                    <span className="text-2xl font-bold text-primary tracking-tight">FoodBridge</span>
+                                    <span className="block text-xs text-secondaryText font-medium">Food Donation Marketplace</span>
+                                </div>
+                            </div>
+
+                            {/* Desktop Navigation */}
+                            <nav className="hidden md:flex items-center space-x-8">
+                                <button onClick={() => setCurrentView('home')} className={`font-medium transition-colors ${currentView === 'home' ? 'text-primary font-semibold' : 'text-secondaryText hover:text-primary'}`}>Home</button>
+                                <button onClick={() => setCurrentView('browse')} className={`font-medium transition-colors ${currentView === 'browse' ? 'text-primary font-semibold' : 'text-secondaryText hover:text-primary'}`}>Browse Food</button>
+                                <button onClick={() => setCurrentView('how_it_works')} className={`font-medium transition-colors ${currentView === 'how_it_works' ? 'text-primary font-semibold' : 'text-secondaryText hover:text-primary'}`}>How It Works</button>
+                                <button onClick={() => setCurrentView('about')} className={`font-medium transition-colors ${currentView === 'about' ? 'text-primary font-semibold' : 'text-secondaryText hover:text-primary'}`}>About</button>
+                            </nav>
+
+                            {/* Auth / Role Controls */}
+                            <div className="hidden md:flex items-center space-x-4">
+                                {currentUser ? (
+                                    <div className="flex items-center space-x-3">
+                                        <button 
+                                            onClick={() => setCurrentView(currentUser.role === 'DONOR' ? 'donor_dashboard' : 'ngo_dashboard')}
+                                            className="px-4 py-2 rounded-xl bg-lightBg border border-borderColor text-darkText font-medium hover:bg-borderColor/50 flex items-center space-x-2 shadow-sm"
+                                        >
+                                            <Icon name="user" className="w-4 h-4 text-primary" />
+                                            <span>{currentUser.organizationName || currentUser.name} ({currentUser.role})</span>
+                                        </button>
+                                        <button 
+                                            onClick={() => { setCurrentUser(null); setCurrentView('home'); }}
+                                            className="p-2 rounded-xl text-secondaryText hover:text-errorColor transition-colors"
+                                            title="Logout"
+                                        >
+                                            <Icon name="logout" className="w-5 h-5" />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center space-x-3">
+                                        <button 
+                                            onClick={() => setActiveModal('login')} 
+                                            className="px-5 py-2.5 rounded-xl text-primary font-semibold hover:bg-primary/5 transition-colors"
+                                        >
+                                            Login
+                                        </button>
+                                        <button 
+                                            onClick={() => setActiveModal('register')} 
+                                            className="px-5 py-2.5 rounded-xl bg-primary text-white font-semibold hover:bg-primaryDark transition-all shadow-md shadow-primary/20"
+                                        >
+                                            Get Started
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Mobile Hamburger Button */}
+                            <div className="md:hidden flex items-center">
+                                <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 text-darkText">
+                                    <Icon name={mobileMenuOpen ? 'x' : 'filter'} className="w-6 h-6" />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Mobile Dropdown */}
+                    {mobileMenuOpen && (
+                        <div className="md:hidden bg-white border-b border-borderColor px-4 pt-2 pb-4 space-y-3">
+                            <button onClick={() => { setCurrentView('home'); setMobileMenuOpen(false); }} className="block w-full text-left py-2 font-medium text-darkText">Home</button>
+                            <button onClick={() => { setCurrentView('browse'); setMobileMenuOpen(false); }} className="block w-full text-left py-2 font-medium text-darkText">Browse Food</button>
+                            <button onClick={() => { setCurrentView('how_it_works'); setMobileMenuOpen(false); }} className="block w-full text-left py-2 font-medium text-darkText">How It Works</button>
+                            <button onClick={() => { setCurrentView('about'); setMobileMenuOpen(false); }} className="block w-full text-left py-2 font-medium text-darkText">About</button>
+                            <hr className="border-borderColor" />
+                            {currentUser ? (
+                                <>
+                                    <button onClick={() => { setCurrentView(currentUser.role === 'DONOR' ? 'donor_dashboard' : 'ngo_dashboard'); setMobileMenuOpen(false); }} className="block w-full text-left py-2 font-semibold text-primary">Dashboard ({currentUser.role})</button>
+                                    <button onClick={() => { setCurrentUser(null); setCurrentView('home'); setMobileMenuOpen(false); }} className="block w-full text-left py-2 font-medium text-errorColor">Logout</button>
+                                </>
+                            ) : (
+                                <div className="flex space-x-2 pt-2">
+                                    <button onClick={() => { setActiveModal('login'); setMobileMenuOpen(false); }} className="flex-1 py-2.5 rounded-xl border border-primary text-primary font-semibold text-center">Login</button>
+                                    <button onClick={() => { setActiveModal('register'); setMobileMenuOpen(false); }} className="flex-1 py-2.5 rounded-xl bg-primary text-white font-semibold text-center">Register</button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </header>
+            );
+        };
+
+        // --- Landing Page Component ---
+        const LandingPage = ({ setCurrentView, stats, donations, setActiveModal, setSelectedDonation }) => {
+            return (
+                <div className="flex flex-col">
+                    {/* Hero Section */}
+                    <section className="relative bg-gradient-to-br from-primary via-primaryDark to-slate-900 text-white py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
+                        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#22C55E_1px,transparent_1px)] [background-size:16px_16px]"></div>
+                        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10">
+                            <div className="lg:col-span-7 space-y-6">
+                                <div className="inline-flex items-center space-x-2 bg-emeraldAccent/20 text-emeraldAccent px-4 py-2 rounded-full text-sm font-semibold border border-emeraldAccent/30">
+                                    <Icon name="leaf" className="w-4 h-4" />
+                                    <span>Zero Hunger & Zero Waste Initiative</span>
+                                </div>
+                                <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight leading-tight">
+                                    Share Food. Spread Hope. <span className="text-emeraldAccent">Reduce Waste.</span>
+                                </h1>
+                                <p className="text-lg sm:text-xl text-slate-300 max-w-2xl leading-relaxed">
+                                    Connect surplus food with NGOs and communities in need. Every donation is an opportunity to reduce waste and make a meaningful difference.
+                                </p>
+                                <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 pt-4">
+                                    <button 
+                                        onClick={() => setActiveModal('add_donation')}
+                                        className="px-8 py-4 rounded-xl bg-emeraldAccent text-slate-950 font-bold hover:bg-emerald-400 transition-all shadow-lg flex items-center justify-center space-x-2 text-lg"
+                                    >
+                                        <Icon name="plus" className="w-6 h-6" />
+                                        <span>Donate Surplus Food</span>
+                                    </button>
+                                    <button 
+                                        onClick={() => setCurrentView('browse')}
+                                        className="px-8 py-4 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold transition-all border border-white/20 flex items-center justify-center space-x-2 text-lg backdrop-blur-md"
+                                    >
+                                        <Icon name="search" className="w-6 h-6" />
+                                        <span>Find Available Food</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="lg:col-span-5">
+                                <div className="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white/10">
+                                    <img 
+                                        src="https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=800&q=80" 
+                                        alt="Food Donation Community" 
+                                        className="w-full h-[400px] object-cover transform hover:scale-105 transition-transform duration-700"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-6">
+                                        <div className="text-white">
+                                            <p className="font-bold text-lg">Community Impact in Action</p>
+                                            <p className="text-sm text-slate-300">Over 5,000+ meals shared across local shelters this month.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Impact Summary Bar */}
+                    <section className="bg-white border-y border-borderColor py-8 shadow-sm">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+                                <div className="p-4 rounded-2xl bg-lightBg border border-borderColor">
+                                    <p className="text-3xl sm:text-4xl font-extrabold text-primary">{stats.totalDonations}</p>
+                                    <p className="text-sm font-semibold text-secondaryText mt-1">Active Donations</p>
+                                </div>
+                                <div className="p-4 rounded-2xl bg-lightBg border border-borderColor">
+                                    <p className="text-3xl sm:text-4xl font-extrabold text-emeraldAccent">{stats.totalDonors}</p>
+                                    <p className="text-sm font-semibold text-secondaryText mt-1">Registered Donors</p>
+                                </div>
+                                <div className="p-4 rounded-2xl bg-lightBg border border-borderColor">
+                                    <p className="text-3xl sm:text-4xl font-extrabold text-accentOrange">{stats.participatingNgos}</p>
+                                    <p className="text-sm font-semibold text-secondaryText mt-1">Participating NGOs</p>
+                                </div>
+                                <div className="p-4 rounded-2xl bg-lightBg border border-borderColor">
+                                    <p className="text-3xl sm:text-4xl font-extrabold text-primary">{stats.completedPickups}</p>
+                                    <p className="text-sm font-semibold text-secondaryText mt-1">Completed Pickups</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* How It Works Section */}
+                    <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+                        <div className="text-center max-w-3xl mx-auto mb-16">
+                            <h2 className="text-3xl sm:text-4xl font-extrabold text-darkText">How FoodBridge Works</h2>
+                            <p className="text-secondaryText mt-3 text-lg">A seamless 3-step transparent workflow connecting surplus food providers directly with charitable organizations.</p>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div className="bg-white p-8 rounded-2xl shadow-sm border border-borderColor text-center relative hover:shadow-md transition-shadow">
+                                <div className="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mx-auto mb-6 text-2xl font-bold">1</div>
+                                <h3 className="text-xl font-bold text-darkText mb-3">1. List Surplus Food</h3>
+                                <p className="text-secondaryText">Restaurants, hotels, and grocers list excess prepared meals or fresh produce with quantities and pickup windows.</p>
+                            </div>
+                            <div className="bg-white p-8 rounded-2xl shadow-sm border border-borderColor text-center relative hover:shadow-md transition-shadow">
+                                <div className="w-16 h-16 bg-emeraldAccent/20 text-emeraldAccent rounded-2xl flex items-center justify-center mx-auto mb-6 text-2xl font-bold">2</div>
+                                <h3 className="text-xl font-bold text-darkText mb-3">2. NGOs Request Pickup</h3>
+                                <p className="text-secondaryText">Verified charitable organizations browse available nearby listings and submit secure pickup requests instantly.</p>
+                            </div>
+                            <div className="bg-white p-8 rounded-2xl shadow-sm border border-borderColor text-center relative hover:shadow-md transition-shadow">
+                                <div className="w-16 h-16 bg-accentOrange/20 text-accentOrange rounded-2xl flex items-center justify-center mx-auto mb-6 text-2xl font-bold">3</div>
+                                <h3 className="text-xl font-bold text-darkText mb-3">3. Distribute & Impact</h3>
+                                <p className="text-secondaryText">Donors approve requests, NGOs collect safely within deadlines, and meals reach communities in need.</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Featured Available Food */}
+                    <section className="bg-slate-100 py-20 px-4 sm:px-6 lg:px-8">
+                        <div className="max-w-7xl mx-auto">
+                            <div className="flex justify-between items-end mb-12">
+                                <div>
+                                    <h2 className="text-3xl font-extrabold text-darkText">Recently Available Donations</h2>
+                                    <p className="text-secondaryText mt-1">Freshly listed surplus ready for immediate secure collection.</p>
+                                </div>
+                                <button 
+                                    onClick={() => setCurrentView('browse')}
+                                    className="hidden sm:flex items-center space-x-2 text-primary font-semibold hover:text-primaryDark"
+                                >
+                                    <span>View All Marketplace</span>
+                                    <Icon name="arrow-right" className="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                {donations.slice(0, 3).map(donation => (
+                                    <div key={donation.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-borderColor flex flex-col hover:shadow-md transition-shadow">
+                                        <div className="relative h-48">
+                                            <img src={donation.imageUrl} alt={donation.foodName} className="w-full h-full object-cover" />
+                                            <span className="absolute top-3 left-3 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full shadow">
+                                                {donation.category}
+                                            </span>
+                                            <span className="absolute top-3 right-3 bg-white/90 text-darkText text-xs font-bold px-3 py-1 rounded-full shadow">
+                                                {donation.quantity} {donation.unit}
+                                            </span>
+                                        </div>
+                                        <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
+                                            <div>
+                                                <h3 className="text-xl font-bold text-darkText">{donation.foodName}</h3>
+                                                <p className="text-secondaryText text-sm mt-1 line-clamp-2">{donation.description}</p>
+                                            </div>
+                                            <div className="space-y-2 text-xs text-secondaryText border-t border-borderColor pt-4">
+                                                <div className="flex items-center space-x-2">
+                                                    <Icon name="map-pin" className="w-4 h-4 text-primary" />
+                                                    <span>{donation.pickupAddress}, {donation.city}</span>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <Icon name="clock" className="w-4 h-4 text-accentOrange" />
+                                                    <span>Deadline: {new Date(donation.pickupDeadline).toLocaleString()}</span>
+                                                </div>
+                                            </div>
+                                            <button 
+                                                onClick={() => { setSelectedDonation(donation); setActiveModal('request_pickup'); }}
+                                                className="w-full py-3 rounded-xl bg-primary text-white font-semibold hover:bg-primaryDark transition-all text-center shadow-sm"
+                                            >
+                                                Request Pickup
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            );
+        };
+
+        // --- Browse Food Page Component ---
+        const BrowseFoodPage = ({ donations, currentUser, setActiveModal, setSelectedDonation }) => {
+            const [searchTerm, setSearchTerm] = useState('');
+            const [selectedCategory, setSelectedCategory] = useState('All');
+            const [selectedCity, setSelectedCity] = useState('All');
+
+            const categories = ['All', 'Cooked Meals', 'Fruits', 'Vegetables', 'Bakery Items', 'Packaged Food', 'Dairy Products'];
+            const cities = ['All', 'Hyderabad', 'Mumbai', 'Bengaluru', 'Delhi'];
+
+            const filteredDonations = useMemo(() => {
+                return donations.filter(d => {
+                    const matchesSearch = d.foodName.toLowerCase().includes(searchTerm.toLowerCase()) || d.description.toLowerCase().includes(searchTerm.toLowerCase());
+                    const matchesCategory = selectedCategory === 'All' || d.category === selectedCategory;
+                    const matchesCity = selectedCity === 'All' || d.city === selectedCity;
+                    const matchesStatus = d.status === 'AVAILABLE';
+                    return matchesSearch && matchesCategory && matchesCity && matchesStatus;
+                });
+            }, [donations, searchTerm, selectedCategory, selectedCity]);
+
+            return (
+                <div className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+                    <div className="mb-8">
+                        <h1 className="text-3xl font-extrabold text-darkText">Browse Food Marketplace</h1>
+                        <p className="text-secondaryText mt-1">Explore surplus food listings available for secure NGO collection and distribution.</p>
+                    </div>
+
+                    {/* Search and Filters Bar */}
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-borderColor mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="relative">
+                            <Icon name="search" className="absolute left-4 top-3.5 w-5 h-5 text-secondaryText" />
+                            <input 
+                                type="text"
+                                placeholder="Search by food name or keywords..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full pl-12 pr-4 py-3 rounded-xl border border-borderColor focus:ring-2 focus:ring-primary focus:outline-none"
+                            />
+                        </div>
+                        <div>
+                            <select 
+                                value={selectedCategory} 
+                                onChange={(e) => setSelectedCategory(e.target.value)}
+                                className="w-full py-3 px-4 rounded-xl border border-borderColor focus:ring-2 focus:ring-primary focus:outline-none bg-white"
+                            >
+                                {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <select 
+                                value={selectedCity} 
+                                onChange={(e) => setSelectedCity(e.target.value)}
+                                className="w-full py-3 px-4 rounded-xl border border-borderColor focus:ring-2 focus:ring-primary focus:outline-none bg-white"
+                            >
+                                {cities.map(city => <option key={city} value={city}>{city}</option>)}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Results Grid */}
+                    {filteredDonations.length === 0 ? (
+                        <div className="text-center py-20 bg-white rounded-2xl border border-borderColor">
+                            <Icon name="utensils" className="w-16 h-16 mx-auto text-secondaryText mb-4 opacity-40" />
+                            <h3 className="text-xl font-bold text-darkText">No available food donations found</h3>
+                            <p className="text-secondaryText mt-1">Try adjusting your search filters or check back later for new listings.</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            {filteredDonations.map(donation => (
+                                <div key={donation.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-borderColor flex flex-col hover:shadow-md transition-shadow">
+                                    <div className="relative h-48">
+                                        <img src={donation.imageUrl} alt={donation.foodName} className="w-full h-full object-cover" />
+                                        <span className="absolute top-3 left-3 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full shadow">
+                                            {donation.category}
+                                        </span>
+                                        <span className="absolute top-3 right-3 bg-white/90 text-darkText text-xs font-bold px-3 py-1 rounded-full shadow">
+                                            {donation.quantity} {donation.unit} (~{donation.estimatedServings} servings)
+                                        </span>
+                                    </div>
+                                    <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
+                                        <div>
+                                            <div className="flex justify-between items-start">
+                                                <h3 className="text-xl font-bold text-darkText">{donation.foodName}</h3>
+                                            </div>
+                                            <p className="text-secondaryText text-sm mt-1">{donation.description}</p>
+                                            <div className="mt-3 flex flex-wrap gap-2">
+                                                <span className="px-2.5 py-1 bg-emeraldAccent/10 text-emeraldAccent rounded-lg text-xs font-semibold">{donation.dietaryType}</span>
+                                                <span className="px-2.5 py-1 bg-slate-100 text-secondaryText rounded-lg text-xs font-medium">Allergens: {donation.allergens}</span>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2 text-xs text-secondaryText border-t border-borderColor pt-4">
+                                            <div className="flex items-center space-x-2">
+                                                <Icon name="map-pin" className="w-4 h-4 text-primary" />
+                                                <span>{donation.pickupAddress}, {donation.city}</span>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <Icon name="clock" className="w-4 h-4 text-accentOrange" />
+                                                <span>Pickup Deadline: {new Date(donation.pickupDeadline).toLocaleString()}</span>
+                                            </div>
+                                        </div>
+                                        {currentUser && currentUser.role === 'NGO' ? (
+                                            <button 
+                                                onClick={() => { setSelectedDonation(donation); setActiveModal('request_pickup'); }}
+                                                className="w-full py-3 rounded-xl bg-primary text-white font-semibold hover:bg-primaryDark transition-all text-center shadow-sm"
+                                            >
+                                                Request Pickup
+                                            </button>
+                                        ) : (
+                                            <div className="text-center py-2 bg-slate-100 rounded-xl text-xs font-medium text-secondaryText">
+                                                Login as NGO to request pickup
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // --- Donor Dashboard Component ---
+        const DonorDashboard = ({ currentUser, donations, requests, setActiveModal, setSelectedDonation, handleDeleteDonation, handleUpdateReqStatus }) => {
+            const myDonations = donations.filter(d => d.donorId === currentUser.id);
+            const myDonationIds = myDonations.map(d => d.id);
+            const myIncomingRequests = requests.filter(r => myDonationIds.includes(r.donationId));
+
+            const summary = {
+                total: myDonations.length,
+                available: myDonations.filter(d => d.status === 'AVAILABLE').length,
+                pendingRequests: myIncomingRequests.filter(r => r.status === 'REQUESTED').length,
+                completed: myDonations.filter(d => d.status === 'COMPLETED').length
+            };
+
+            return (
+                <div className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+                    <div className="flex justify-between items-center mb-8">
+                        <div>
+                            <h1 className="text-3xl font-extrabold text-darkText">Donor Dashboard</h1>
+                            <p className="text-secondaryText mt-1">Welcome back, {currentUser.name} ({currentUser.organizationName})</p>
+                        </div>
+                        <button 
+                            onClick={() => setActiveModal('add_donation')}
+                            className="px-6 py-3 rounded-xl bg-primary text-white font-semibold hover:bg-primaryDark transition-all shadow-md flex items-center space-x-2"
+                        >
+                            <Icon name="plus" className="w-5 h-5" />
+                            <span>Add New Food Donation</span>
+                        </button>
+                    </div>
+
+                    {/* Summary Cards */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-borderColor">
+                            <p className="text-3xl font-extrabold text-primary">{summary.total}</p>
+                            <p className="text-sm font-semibold text-secondaryText mt-1">Total Donations</p>
+                        </div>
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-borderColor">
+                            <p className="text-3xl font-extrabold text-emeraldAccent">{summary.available}</p>
+                            <p className="text-sm font-semibold text-secondaryText mt-1">Available Listings</p>
+                        </div>
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-borderColor">
+                            <p className="text-3xl font-extrabold text-accentOrange">{summary.pendingRequests}</p>
+                            <p className="text-sm font-semibold text-secondaryText mt-1">Pending NGO Requests</p>
+                        </div>
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-borderColor">
+                            <p className="text-3xl font-extrabold text-successColor">{summary.completed}</p>
+                            <p className="text-sm font-semibold text-secondaryText mt-1">Completed Pickups</p>
+                        </div>
+                    </div>
+
+                    {/* My Donations Table */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-borderColor overflow-hidden mb-12">
+                        <div className="px-6 py-5 border-b border-borderColor">
+                            <h3 className="text-xl font-bold text-darkText">My Surplus Food Donations</h3>
+                        </div>
+                        {myDonations.length === 0 ? (
+                            <div className="text-center py-16 text-secondaryText">
+                                <p>You haven't posted any food donations yet.</p>
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-lightBg border-b border-borderColor text-xs font-semibold text-secondaryText uppercase tracking-wider">
+                                            <th className="py-4 px-6">Food Name</th>
+                                            <th className="py-4 px-6">Category</th>
+                                            <th className="py-4 px-6">Quantity</th>
+                                            <th className="py-4 px-6">Pickup Deadline</th>
+                                            <th className="py-4 px-6">Status</th>
+                                            <th className="py-4 px-6 text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-borderColor text-sm">
+                                        {myDonations.map(donation => {
+                                            const reqsForThis = myIncomingRequests.filter(r => r.donationId === donation.id);
+                                            return (
+                                                <tr key={donation.id} className="hover:bg-lightBg/50 transition-colors">
+                                                    <td className="py-4 px-6 font-semibold text-darkText">{donation.foodName}</td>
+                                                    <td className="py-4 px-6 text-secondaryText">{donation.category}</td>
+                                                    <td className="py-4 px-6 text-secondaryText">{donation.quantity} {donation.unit}</td>
+                                                    <td className="py-4 px-6 text-secondaryText">{new Date(donation.pickupDeadline).toLocaleString()}</td>
+                                                    <td className="py-4 px-6">
+                                                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                                                            donation.status === 'AVAILABLE' ? 'bg-emeraldAccent/10 text-emeraldAccent' :
+                                                            donation.status === 'REQUESTED' ? 'bg-accentOrange/10 text-accentOrange' :
+                                                            donation.status === 'APPROVED' ? 'bg-blue-100 text-blue-700' :
+                                                            'bg-successColor/10 text-successColor'
+                                                        }`}>
+                                                            {donation.status}
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-4 px-6 text-right space-x-2">
+                                                        {reqsForThis.length > 0 && (
+                                                            <button 
+                                                                onClick={() => { setSelectedDonation(donation); setActiveModal('manage_requests'); }}
+                                                                className="px-3 py-1.5 bg-accentOrange/10 text-accentOrange font-semibold rounded-lg hover:bg-accentOrange/20 transition-colors text-xs"
+                                                            >
+                                                                Review Requests ({reqsForThis.length})
+                                                            </button>
+                                                        )}
+                                                        <button 
+                                                            onClick={() => handleDeleteDonation(donation.id)}
+                                                            className="p-1.5 text-secondaryText hover:text-errorColor transition-colors"
+                                                            title="Delete"
+                                                        >
+                                                            <Icon name="trash" className="w-5 h-5" />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        // --- NGO Dashboard Component ---
+        const NgoDashboard = ({ currentUser, requests, donations, handleUpdateReqStatus, setCurrentView }) => {
+            const myRequests = requests.filter(r => r.ngoId === currentUser.id);
+
+            const summary = {
+                totalRequests: myRequests.length,
+                approved: myRequests.filter(r => r.status === 'APPROVED').length,
+                completed: myRequests.filter(r => r.status === 'COMPLETED').length,
+                pending: myRequests.filter(r => r.status === 'REQUESTED').length
+            };
+
+            return (
+                <div className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+                    <div className="flex justify-between items-center mb-8">
+                        <div>
+                            <h1 className="text-3xl font-extrabold text-darkText">NGO Dashboard</h1>
+                            <p className="text-secondaryText mt-1">Welcome, {currentUser.organizationName} ({currentUser.name})</p>
+                        </div>
+                        <button 
+                            onClick={() => setCurrentView('browse')}
+                            className="px-6 py-3 rounded-xl bg-primary text-white font-semibold hover:bg-primaryDark transition-all shadow-md flex items-center space-x-2"
+                        >
+                            <Icon name="search" className="w-5 h-5" />
+                            <span>Browse Food Marketplace</span>
+                        </button>
+                    </div>
+
+                    {/* Summary Cards */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-borderColor">
+                            <p className="text-3xl font-extrabold text-primary">{summary.totalRequests}</p>
+                            <p className="text-sm font-semibold text-secondaryText mt-1">Total Requests</p>
+                        </div>
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-borderColor">
+                            <p className="text-3xl font-extrabold text-accentOrange">{summary.pending}</p>
+                            <p className="text-sm font-semibold text-secondaryText mt-1">Pending Approval</p>
+                        </div>
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-borderColor">
+                            <p className="text-3xl font-extrabold text-blue-600">{summary.approved}</p>
+                            <p className="text-sm font-semibold text-secondaryText mt-1">Approved Pickups</p>
+                        </div>
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-borderColor">
+                            <p className="text-3xl font-extrabold text-successColor">{summary.completed}</p>
+                            <p className="text-sm font-semibold text-secondaryText mt-1">Completed Collections</p>
+                        </div>
+                    </div>
+
+                    {/* My Requests Table */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-borderColor overflow-hidden mb-12">
+                        <div className="px-6 py-5 border-b border-borderColor">
+                            <h3 className="text-xl font-bold text-darkText">My Pickup Requests & Tracking</h3>
+                        </div>
+                        {myRequests.length === 0 ? (
+                            <div className="text-center py-16 text-secondaryText">
+                                <p>You haven't requested any food pickups yet. Explore the marketplace to find available surplus food.</p>
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-lightBg border-b border-borderColor text-xs font-semibold text-secondaryText uppercase tracking-wider">
+                                            <th className="py-4 px-6">Food Item</th>
+                                            <th className="py-4 px-6">Requested Quantity</th>
+                                            <th className="py-4 px-6">Request Date</th>
+                                            <th className="py-4 px-6">Status</th>
+                                            <th className="py-4 px-6 text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-borderColor text-sm">
+                                        {myRequests.map(req => {
+                                            const donation = donations.find(d => d.id === req.donationId);
+                                            return (
+                                                <tr key={req.id} className="hover:bg-lightBg/50 transition-colors">
+                                                    <td className="py-4 px-6 font-semibold text-darkText">{donation ? donation.foodName : 'Unknown Food Item'}</td>
+                                                    <td className="py-4 px-6 text-secondaryText">{req.requestedQuantity} {donation ? donation.unit : 'units'}</td>
+                                                    <td className="py-4 px-6 text-secondaryText">{new Date(req.requestedAt).toLocaleString()}</td>
+                                                    <td className="py-4 px-6">
+                                                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                                                            req.status === 'REQUESTED' ? 'bg-accentOrange/10 text-accentOrange' :
+                                                            req.status === 'APPROVED' ? 'bg-blue-100 text-blue-700' :
+                                                            req.status === 'COMPLETED' ? 'bg-successColor/10 text-successColor' :
+                                                            'bg-errorColor/10 text-errorColor'
+                                                        }`}>
+                                                            {req.status}
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-4 px-6 text-right">
+                                                        {req.status === 'APPROVED' && (
+                                                            <button 
+                                                                onClick={() => handleUpdateReqStatus(req.id, 'COMPLETED')}
+                                                                className="px-4 py-2 bg-successColor text-white font-semibold rounded-xl hover:bg-successColor/90 transition-colors text-xs"
+                                                            >
+                                                                Confirm Collection
+                                                            </button>
+                                                        )}
+                                                        {req.status === 'REQUESTED' && (
+                                                            <span className="text-xs text-secondaryText italic">Awaiting Donor Approval</span>
+                                                        )}
+                                                        {req.status === 'COMPLETED' && (
+                                                            <span className="text-xs text-successColor font-semibold">Completed Successfully</span>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        // --- How It Works Page ---
+        const HowItWorksPage = ({ setCurrentView }) => {
+            return (
+                <div className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+                    <div className="text-center max-w-3xl mx-auto mb-16">
+                        <h1 className="text-4xl font-extrabold text-darkText">How FoodBridge Works</h1>
+                        <p className="text-secondaryText mt-3 text-lg">Our platform bridges the gap between surplus food generators and charitable distributors with absolute transparency and food safety protocols.</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center mb-20">
+                        <div className="space-y-6">
+                            <div className="inline-block px-4 py-1.5 bg-primary/10 text-primary font-bold rounded-full text-sm">For Food Donors</div>
+                            <h2 className="text-3xl font-bold text-darkText">Turn Surplus Into Smiles</h2>
+                            <p className="text-secondaryText leading-relaxed">
+                                Whether you run a restaurant, hotel, supermarket, or bakery, your surplus cooked meals or fresh produce shouldn't go to waste. List your items in under 2 minutes with preparation time, best-before deadlines, and pickup instructions.
+                            </p>
+                            <ul className="space-y-3 text-darkText font-medium">
+                                <li className="flex items-center space-x-3"><Icon name="check" className="w-5 h-5 text-successColor"/><span>Zero disposal costs & tax benefits</span></li>
+                                <li className="flex items-center space-x-3"><Icon name="check" className="w-5 h-5 text-successColor"/><span>Full control over request approvals</span></li>
+                                <li className="flex items-center space-x-3"><Icon name="check" className="w-5 h-5 text-successColor"/><span>Real-time impact tracking</span></li>
+                            </ul>
+                        </div>
+                        <div className="rounded-3xl overflow-hidden shadow-xl border border-borderColor">
+                            <img src="https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&w=800&q=80" alt="Donor Food Safety" className="w-full h-[350px] object-cover" />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                        <div className="order-2 md:order-1 rounded-3xl overflow-hidden shadow-xl border border-borderColor">
+                            <img src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=800&q=80" alt="NGO Distribution" className="w-full h-[350px] object-cover" />
+                        </div>
+                        <div className="order-1 md:order-2 space-y-6">
+                            <div className="inline-block px-4 py-1.5 bg-emeraldAccent/20 text-emeraldAccent font-bold rounded-full text-sm">For NGOs & Communities</div>
+                            <h2 className="text-3xl font-bold text-darkText">Streamlined Collection & Distribution</h2>
+                            <p className="text-secondaryText leading-relaxed">
+                                Registered NGOs browse verified surplus donations filtered by city, category, and urgency. Submit instant pickup requests and coordinate directly for safe collection.
+                            </p>
+                            <ul className="space-y-3 text-darkText font-medium">
+                                <li className="flex items-center space-x-3"><Icon name="check" className="w-5 h-5 text-successColor"/><span>Browse live verified food listings</span></li>
+                                <li className="flex items-center space-x-3"><Icon name="check" className="w-5 h-5 text-successColor"/><span>Instant request status tracking</span></li>
+                                <li className="flex items-center space-x-3"><Icon name="check" className="w-5 h-5 text-successColor"/><span>Reliable community nourishment</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- About Page ---
+        const AboutPage = () => {
+            return (
+                <div className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+                    <div className="text-center max-w-3xl mx-auto mb-16">
+                        <h1 className="text-4xl font-extrabold text-darkText">About FoodBridge</h1>
+                        <p className="text-secondaryText mt-3 text-lg">Empowering communities to eliminate food waste and hunger through digital innovation.</p>
+                    </div>
+
+                    <div className="bg-white rounded-3xl p-8 sm:p-12 shadow-sm border border-borderColor space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                            <div className="p-6 rounded-2xl bg-lightBg border border-borderColor">
+                                <Icon name="leaf" className="w-10 h-10 mx-auto text-primary mb-4" />
+                                <h3 className="text-xl font-bold text-darkText mb-2">Our Mission</h3>
+                                <p className="text-secondaryText text-sm">To create an efficient, transparent digital ecosystem where surplus food is redirected from landfills to plates in need.</p>
+                            </div>
+                            <div className="p-6 rounded-2xl bg-lightBg border border-borderColor">
+                                <Icon name="shield" className="w-10 h-10 mx-auto text-emeraldAccent mb-4" />
+                                <h3 className="text-xl font-bold text-darkText mb-2">Food Safety First</h3>
+                                <p className="text-secondaryText text-sm">Strict adherence to hygiene guidelines, preparation timelines, and allergen disclosures for every listed item.</p>
+                            </div>
+                            <div className="p-6 rounded-2xl bg-lightBg border border-borderColor">
+                                <Icon name="users" className="w-10 h-10 mx-auto text-accentOrange mb-4" />
+                                <h3 className="text-xl font-bold text-darkText mb-2">Community Driven</h3>
+                                <p className="text-secondaryText text-sm">Building strong partnerships between local businesses, volunteers, and charitable organizations.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- Modals ---
+        const LoginModal = ({ setActiveModal, setCurrentUser, setCurrentView, showToast }) => {
+            const [email, setEmail] = useState('');
+            const [password, setPassword] = useState('');
+
+            const handleLogin = (e) => {
+                e.preventDefault();
+                if (email.includes('ngo')) {
+                    setCurrentUser({
+                        id: 'ngo_1',
+                        name: 'Amina Khan',
+                        email: email,
+                        role: 'NGO',
+                        organizationName: 'Hope Foundation India',
+                        city: 'Hyderabad'
+                    });
+                    setCurrentView('ngo_dashboard');
+                } else {
+                    setCurrentUser({
+                        id: 'donor_1',
+                        name: 'Rajesh Sharma',
+                        email: email,
+                        role: 'DONOR',
+                        organizationName: 'GreenLeaf Bakery',
+                        city: 'Hyderabad'
+                    });
+                    setCurrentView('donor_dashboard');
+                }
+                setActiveModal(null);
+                showToast('Successfully logged in!');
+            };
+
+            return (
+                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl relative border border-borderColor">
+                        <button onClick={() => setActiveModal(null)} className="absolute top-6 right-6 text-secondaryText hover:text-darkText">
+                            <Icon name="x" className="w-6 h-6" />
+                        </button>
+                        <h2 className="text-2xl font-bold text-darkText mb-2">Welcome Back</h2>
+                        <p className="text-secondaryText text-sm mb-6">Login to your FoodBridge account</p>
+                        <form onSubmit={handleLogin} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-semibold text-darkText mb-1">Email Address</label>
+                                <input 
+                                    type="email" 
+                                    required 
+                                    value={email} 
+                                    onChange={(e) => setEmail(e.target.value)} 
+                                    placeholder="e.g. rajesh@greenleafbakery.com"
+                                    className="w-full px-4 py-3 rounded-xl border border-borderColor focus:ring-2 focus:ring-primary focus:outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-darkText mb-1">Password</label>
+                                <input 
+                                    type="password" 
+                                    required 
+                                    value={password} 
+                                    onChange={(e) => setPassword(e.target.value)} 
+                                    placeholder="••••••••"
+                                    className="w-full px-4 py-3 rounded-xl border border-borderColor focus:ring-2 focus:ring-primary focus:outline-none"
+                                />
+                            </div>
+                            <button type="submit" className="w-full py-3.5 rounded-xl bg-primary text-white font-bold hover:bg-primaryDark transition-all shadow-md">
+                                Login
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        const RegisterModal = ({ setActiveModal, setCurrentUser, setCurrentView, showToast }) => {
+            const [name, setName] = useState('');
+            const [email, setEmail] = useState('');
+            const [password, setPassword] = useState('');
+            const [role, setRole] = useState('DONOR');
+            const [orgName, setOrgName] = useState('');
+            const [city, setCity] = useState('Hyderabad');
+
+            const handleRegister = (e) => {
+                e.preventDefault();
+                const newUser = {
+                    id: role.toLowerCase() + '_' + Date.now(),
+                    name,
+                    email,
+                    role,
+                    organizationName: orgName || name,
+                    city
+                };
+                setCurrentUser(newUser);
+                setActiveModal(null);
+                setCurrentView(role === 'DONOR' ? 'donor_dashboard' : 'ngo_dashboard');
+                showToast('Registration successful! Welcome to FoodBridge.');
+            };
+
+            return (
+                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl max-w-lg w-full p-8 shadow-2xl relative border border-borderColor max-h-[90vh] overflow-y-auto">
+                        <button onClick={() => setActiveModal(null)} className="absolute top-6 right-6 text-secondaryText hover:text-darkText">
+                            <Icon name="x" className="w-6 h-6" />
+                        </button>
+                        <h2 className="text-2xl font-bold text-darkText mb-2">Create Account</h2>
+                        <p className="text-secondaryText text-sm mb-6">Join FoodBridge as a Food Donor or NGO</p>
+                        <form onSubmit={handleRegister} className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <button 
+                                    type="button" 
+                                    onClick={() => setRole('DONOR')}
+                                    className={`py-3 rounded-xl font-semibold border ${role === 'DONOR' ? 'bg-primary text-white border-primary' : 'bg-lightBg text-secondaryText border-borderColor'}`}
+                                >
+                                    Food Donor
+                                </button>
+                                <button 
+                                    type="button" 
+                                    onClick={() => setRole('NGO')}
+                                    className={`py-3 rounded-xl font-semibold border ${role === 'NGO' ? 'bg-primary text-white border-primary' : 'bg-lightBg text-secondaryText border-borderColor'}`}
+                                >
+                                    NGO / Charity
+                                </button>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-darkText mb-1">Full Name</label>
+                                <input type="text" required value={name} onChange={(e) => setName(e.target.value)} placeholder="John Doe" className="w-full px-4 py-3 rounded-xl border border-borderColor focus:ring-2 focus:ring-primary focus:outline-none" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-darkText mb-1">{role === 'DONOR' ? 'Business / Restaurant Name' : 'NGO Organization Name'}</label>
+                                <input type="text" required value={orgName} onChange={(e) => setOrgName(e.target.value)} placeholder={role === 'DONOR' ? 'Grand Cafe' : 'Hope Foundation'} className="w-full px-4 py-3 rounded-xl border border-borderColor focus:ring-2 focus:ring-primary focus:outline-none" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-darkText mb-1">Email Address</label>
+                                <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="john@example.com" className="w-full px-4 py-3 rounded-xl border border-borderColor focus:ring-2 focus:ring-primary focus:outline-none" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-darkText mb-1">Password</label>
+                                <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="w-full px-4 py-3 rounded-xl border border-borderColor focus:ring-2 focus:ring-primary focus:outline-none" />
+                            </div>
+                            <button type="submit" className="w-full py-3.5 rounded-xl bg-primary text-white font-bold hover:bg-primaryDark transition-all shadow-md">
+                                Register Account
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        const AddDonationModal = ({ setActiveModal, handleAddDonation }) => {
+            const [foodName, setFoodName] = useState('');
+            const [category, setCategory] = useState('Cooked Meals');
+            const [description, setDescription] = useState('');
+            const [quantity, setQuantity] = useState('');
+            const [unit, setUnit] = useState('kg');
+            const [servings, setServings] = useState('');
+            const [deadline, setDeadline] = useState('');
+            const [address, setAddress] = useState('');
+            const [city, setCity] = useState('Hyderabad');
+            const [imageUrl, setImageUrl] = useState('');
+            const [dietaryType, setDietaryType] = useState('Vegetarian');
+            const [allergens, setAllergens] = useState('None');
+
+            const onSubmit = (e) => {
+                e.preventDefault();
+                handleAddDonation({
+                    foodName,
+                    category,
+                    description,
+                    quantity: Number(quantity),
+                    unit,
+                    estimatedServings: Number(servings) || 10,
+                    preparationDate: new Date().toISOString(),
+                    pickupDeadline: deadline || new Date(Date.now() + 86400000).toISOString(),
+                    pickupAddress: address,
+                    city,
+                    imageUrl: imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
+                    dietaryType,
+                    allergens
+                });
+            };
+
+            return (
+                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl max-w-2xl w-full p-8 shadow-2xl relative border border-borderColor max-h-[90vh] overflow-y-auto">
+                        <button onClick={() => setActiveModal(null)} className="absolute top-6 right-6 text-secondaryText hover:text-darkText">
+                            <Icon name="x" className="w-6 h-6" />
+                        </button>
+                        <h2 className="text-2xl font-bold text-darkText mb-2">Add Surplus Food Donation</h2>
+                        <p className="text-secondaryText text-sm mb-6">Fill in surplus food details for nearby NGOs to discover</p>
+                        <form onSubmit={onSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-semibold text-darkText mb-1">Food Name</label>
+                                <input type="text" required value={foodName} onChange={(e) => setFoodName(e.target.value)} placeholder="e.g. Fresh Vegetable Biryani" className="w-full px-4 py-3 rounded-xl border border-borderColor focus:ring-2 focus:ring-primary focus:outline-none" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-darkText mb-1">Category</label>
+                                    <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-borderColor focus:ring-2 focus:ring-primary focus:outline-none bg-white">
+                                        <option value="Cooked Meals">Cooked Meals</option>
+                                        <option value="Fruits">Fruits</option>
+                                        <option value="Vegetables">Vegetables</option>
+                                        <option value="Bakery Items">Bakery Items</option>
+                                        <option value="Packaged Food">Packaged Food</option>
+                                        <option value="Dairy Products">Dairy Products</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-darkText mb-1">Dietary Type</label>
+                                    <select value={dietaryType} onChange={(e) => setDietaryType(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-borderColor focus:ring-2 focus:ring-primary focus:outline-none bg-white">
+                                        <option value="Vegetarian">Vegetarian</option>
+                                        <option value="Non-Vegetarian">Non-Vegetarian</option>
+                                        <option value="Vegan">Vegan</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-3 gap-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-darkText mb-1">Quantity</label>
+                                    <input type="number" step="0.1" required value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="15" className="w-full px-4 py-3 rounded-xl border border-borderColor focus:ring-2 focus:ring-primary focus:outline-none" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-darkText mb-1">Unit</label>
+                                    <select value={unit} onChange={(e) => setUnit(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-borderColor focus:ring-2 focus:ring-primary focus:outline-none bg-white">
+                                        <option value="kg">kg</option>
+                                        <option value="liters">liters</option>
+                                        <option value="portions">portions</option>
+                                        <option value="packets">packets</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-darkText mb-1">Est. Servings</label>
+                                    <input type="number" required value={servings} onChange={(e) => setServings(e.target.value)} placeholder="45" className="w-full px-4 py-3 rounded-xl border border-borderColor focus:ring-2 focus:ring-primary focus:outline-none" />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-darkText mb-1">Description & Quality Note</label>
+                                <textarea rows="3" required value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe preparation time, storage, and condition..." className="w-full px-4 py-3 rounded-xl border border-borderColor focus:ring-2 focus:ring-primary focus:outline-none"></textarea>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-darkText mb-1">Pickup Deadline</label>
+                                    <input type="datetime-local" required value={deadline} onChange={(e) => setDeadline(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-borderColor focus:ring-2 focus:ring-primary focus:outline-none" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-darkText mb-1">City</label>
+                                    <input type="text" required value={city} onChange={(e) => setCity(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-borderColor focus:ring-2 focus:ring-primary focus:outline-none" />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-darkText mb-1">Pickup Address</label>
+                                <input type="text" required value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Street address and landmark" className="w-full px-4 py-3 rounded-xl border border-borderColor focus:ring-2 focus:ring-primary focus:outline-none" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-darkText mb-1">Food Image URL (Optional)</label>
+                                <input type="url" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://images.unsplash.com/..." className="w-full px-4 py-3 rounded-xl border border-borderColor focus:ring-2 focus:ring-primary focus:outline-none" />
+                            </div>
+                            <button type="submit" className="w-full py-3.5 rounded-xl bg-primary text-white font-bold hover:bg-primaryDark transition-all shadow-md">
+                                Publish Donation Listing
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        const RequestPickupModal = ({ donation, setActiveModal, handleRequestPickup }) => {
+            const [quantity, setQuantity] = useState(donation.quantity);
+            const [message, setMessage] = useState('');
+
+            const onSubmit = (e) => {
+                e.preventDefault();
+                handleRequestPickup(donation.id, Number(quantity), message);
+            };
+
+            return (
+                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl relative border border-borderColor">
+                        <button onClick={() => setActiveModal(null)} className="absolute top-6 right-6 text-secondaryText hover:text-darkText">
+                            <Icon name="x" className="w-6 h-6" />
+                        </button>
+                        <h2 className="text-2xl font-bold text-darkText mb-1">Request Food Pickup</h2>
+                        <p className="text-secondaryText text-sm mb-4">{donation.foodName} ({donation.quantity} {donation.unit} available)</p>
+                        <form onSubmit={onSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-semibold text-darkText mb-1">Requested Quantity ({donation.unit})</label>
+                                <input 
+                                    type="number" 
+                                    max={donation.quantity} 
+                                    min="0.1" 
+                                    step="0.1" 
+                                    required 
+                                    value={quantity} 
+                                    onChange={(e) => setQuantity(e.target.value)} 
+                                    className="w-full px-4 py-3 rounded-xl border border-borderColor focus:ring-2 focus:ring-primary focus:outline-none" 
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-darkText mb-1">Message to Donor</label>
+                                <textarea 
+                                    rows="3" 
+                                    value={message} 
+                                    onChange={(e) => setMessage(e.target.value)} 
+                                    placeholder="Provide pickup time or vehicle details..." 
+                                    className="w-full px-4 py-3 rounded-xl border border-borderColor focus:ring-2 focus:ring-primary focus:outline-none"
+                                ></textarea>
+                            </div>
+                            <button type="submit" className="w-full py-3.5 rounded-xl bg-primary text-white font-bold hover:bg-primaryDark transition-all shadow-md">
+                                Submit Pickup Request
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        const ManageRequestsModal = ({ donation, requests, setActiveModal, handleUpdateReqStatus }) => {
+            const donationReqs = requests.filter(r => r.donationId === donation.id);
+
+            return (
+                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl max-w-2xl w-full p-8 shadow-2xl relative border border-borderColor max-h-[90vh] overflow-y-auto">
+                        <button onClick={() => setActiveModal(null)} className="absolute top-6 right-6 text-secondaryText hover:text-darkText">
+                            <Icon name="x" className="w-6 h-6" />
+                        </button>
+                        <h2 className="text-2xl font-bold text-darkText mb-1">Manage Pickup Requests</h2>
+                        <p className="text-secondaryText text-sm mb-6">{donation.foodName}</p>
+
+                        <div className="space-y-4">
+                            {donationReqs.length === 0 ? (
+                                <p className="text-secondaryText text-center py-8">No requests for this item yet.</p>
+                            ) : (
+                                donationReqs.map(req => (
+                                    <div key={req.id} className="p-5 rounded-2xl bg-lightBg border border-borderColor flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+                                        <div>
+                                            <p className="font-bold text-darkText text-lg">{req.ngoName}</p>
+                                            <p className="text-sm text-secondaryText">Requested Quantity: <span className="font-semibold text-darkText">{req.requestedQuantity} {donation.unit}</span></p>
+                                            {req.requestMessage && <p className="text-sm text-secondaryText mt-1 italic">"{req.requestMessage}"</p>}
+                                            <span className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold ${req.status === 'APPROVED' ? 'bg-blue-100 text-blue-700' : req.status === 'REQUESTED' ? 'bg-accentOrange/10 text-accentOrange' : 'bg-successColor/10 text-successColor'}`}>
+                                                Status: {req.status}
+                                            </span>
+                                        </div>
+                                        <div className="flex space-x-2">
+                                            {req.status === 'REQUESTED' && (
+                                                <>
+                                                    <button 
+                                                        onClick={() => { handleUpdateReqStatus(req.id, 'APPROVED'); setActiveModal(null); }}
+                                                        className="px-4 py-2 bg-successColor text-white font-semibold rounded-xl hover:bg-successColor/90 text-xs"
+                                                    >
+                                                        Approve
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => { handleUpdateReqStatus(req.id, 'REJECTED'); setActiveModal(null); }}
+                                                        className="px-4 py-2 bg-errorColor text-white font-semibold rounded-xl hover:bg-errorColor/90 text-xs"
+                                                    >
+                                                        Reject
+                                                    </button>
+                                                </>
+                                            )}
+                                            {req.status === 'APPROVED' && (
+                                                <span className="text-xs font-semibold text-blue-700">Approved for Pickup</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- Footer Component ---
+        const Footer = ({ setCurrentView }) => {
+            return (
+                <footer className="bg-slate-900 text-white pt-16 pb-12 border-t border-borderColor">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+                        <div className="space-y-4">
+                            <div className="flex items-center space-x-3">
+                                <div className="w-10 h-10 rounded-xl bg-emeraldAccent text-slate-950 flex items-center justify-center font-bold">
+                                    <Icon name="leaf" className="w-6 h-6 text-slate-950" />
+                                </div>
+                                <span className="text-2xl font-bold tracking-tight">FoodBridge</span>
+                            </div>
+                            <p className="text-slate-400 text-sm leading-relaxed">
+                                Connecting surplus food donors with NGOs and charitable organizations to eliminate food waste and nourish communities.
+                            </p>
+                        </div>
+                        <div>
+                            <h4 className="text-lg font-bold mb-4">Quick Links</h4>
+                            <ul className="space-y-2 text-slate-400 text-sm">
+                                <li><button onClick={() => setCurrentView('home')} className="hover:text-emeraldAccent transition-colors">Home</button></li>
+                                <li><button onClick={() => setCurrentView('browse')} className="hover:text-emeraldAccent transition-colors">Browse Food</button></li>
+                                <li><button onClick={() => setCurrentView('how_it_works')} className="hover:text-emeraldAccent transition-colors">How It Works</button></li>
+                                <li><button onClick={() => setCurrentView('about')} className="hover:text-emeraldAccent transition-colors">About Us</button></li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 className="text-lg font-bold mb-4">Food Categories</h4>
+                            <ul className="space-y-2 text-slate-400 text-sm">
+                                <li>Cooked Meals</li>
+                                <li>Fresh Fruits & Vegetables</li>
+                                <li>Bakery & Pastries</li>
+                                <li>Dairy Products</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 className="text-lg font-bold mb-4">Impact & Trust</h4>
+                            <p className="text-slate-400 text-sm leading-relaxed">
+                                Committed to food safety, transparent request workflows, and measurable social impact.
+                            </p>
+                        </div>
+                    </div>
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 border-t border-slate-800 text-center text-slate-500 text-sm">
+                        &copy; 2026 FoodBridge Marketplace. All rights reserved. Built for social impact and sustainable futures.
+                    </div>
+                </footer>
+            );
+        };
+
+        // Render React Application
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
